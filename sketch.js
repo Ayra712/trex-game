@@ -48,11 +48,11 @@ function setup() {
   restart.addImage(restartImage);
   restart.scale = 0.5
   
-  trex = createSprite(50,height-20,20,50);
+  trex = createSprite(50,height-30,20,50);
   trex.addAnimation("running", trex_running);
   trex.addAnimation("collided" , trex_collided)
   trex.scale = 0.5;
-  
+  trex.debug = true
   
   ground = createSprite(200,height-20,400,20);
   ground.addImage("ground",groundImage);
@@ -69,20 +69,22 @@ function setup() {
   
   score = 0;
   checkbox = createCheckbox("Activate Bot?");
-  checkbox.position(500,150);
+  checkbox.position(width-150,40);
 
  console.log(width + ", " + height);
 }
 
 function draw() {
-    background(180);
-  text("score: " + score,530,20);
+  background(180);
+  textSize(20)
+  text("high score: " + highScore,width-250,20);
+  text("score: " + score,width-120,20);
   if(gameState === PLAY){
   if(frameCount % 10 === 0){
     score = score + 1;
   }
-  text("high score: " + highScore,450,20);
-   if(keyDown("space")&& trex.y >= 100) {
+  
+   if(keyDown("space")&& trex.y >= height-150) {
     trex.velocityY = -10;
      jumpSound.play();
   }
@@ -90,25 +92,29 @@ function draw() {
     if (ground.x < 0){
     ground.x = ground.width/2;
   }
-    spawnClouds();
+  if(checkbox.checked()){
+    trex.setCollider("rectangle",40,0,trex.width + 50,trex.height   + 50);
+  }else{
+    trex.setCollider("rectangle",0,0,trex.width + 50,trex.height   + 50);
+  }
+  spawnClouds();
   spawnObstacles();
     if(obstaclesGroup.isTouching(trex)){
       if(checkbox.checked()){
-        trex.setCollider("rectangle",0,0,200,trex.height);
         trex.velocityY = -10;
         jumpSound.play(); 
       }else{
-      trex.setCollider("rectangle",0,0,trex.width,trex.height);
-      gameState = END
-      dieSound.play();
+        gameState = END
+        dieSound.play();
       }
     }
     ground.velocityX = -(4 + 3 * score/100);
+    
     if(score % 100 === 0 && score > 0){
       checkPointSound.play();
     }
     
-    gameOver.visible = false;
+  gameOver.visible = false;
   restart.visible = false;
   }
   
@@ -172,7 +178,7 @@ function spawnObstacles(){
    
     //assign scale and lifetime to the obstacle           
     obstacle.scale = 0.5;
-    obstacle.lifetime = 300;
+    obstacle.lifetime = width/2;
    
    //adding obstacles to the group
    obstaclesGroup.add(obstacle);
@@ -192,7 +198,7 @@ function spawnClouds() {
     cloud.velocityX = -3;
     
      //assign lifetime to the variable
-    cloud.lifetime = 134;
+    cloud.lifetime = width/2;
     
     //adjust the depth
     cloud.depth = trex.depth;
