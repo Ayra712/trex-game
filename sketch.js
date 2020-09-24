@@ -8,11 +8,12 @@ var ground, invisibleGround, groundImage;
 var cloud, cloudsGroup, cloudImage;
 var obstaclesGroup, obstacle1, obstacle2, obstacle3, obstacle4, obstacle5, obstacle6;
 
-var score,highScore = 0;
+var score;
 
 var checkPointSound, dieSound, jumpSound;
 
 var checkbox;
+
 
 function preload(){
   trex_running = loadAnimation("trex1.png","trex3.png","trex4.png");
@@ -52,7 +53,6 @@ function setup() {
   trex.addAnimation("running", trex_running);
   trex.addAnimation("collided" , trex_collided)
   trex.scale = 0.5;
-  trex.debug = true
   
   ground = createSprite(200,height-20,400,20);
   ground.addImage("ground",groundImage);
@@ -71,34 +71,51 @@ function setup() {
   checkbox = createCheckbox("Activate Bot?");
   checkbox.position(width-150,40);
 
- console.log(width + ", " + height);
+  if(!"highestScore" in localStorage){
+    localStorage.setItem("highestScore",0);
+  }
+ 
+  
 }
+
 
 function draw() {
   background(180);
+
+  fill("black")
   textSize(20)
-  text("high score: " + highScore,width-250,20);
+  text("HS: " + localStorage.getItem("highestScore"),width-250,20);
   text("score: " + score,width-120,20);
-  if(gameState === PLAY){
-  if(frameCount % 10 === 0){
-    score = score + 1;
-  }
   
-   if(keyDown("space")&& trex.y >= height-150) {
-    trex.velocityY = -10;
-     jumpSound.play();
-  }
-  trex.velocityY = trex.velocityY + 0.8
+  if(gameState === PLAY){
+
+    if(frameCount % 5 === 0){
+      score = score + 1;
+    }
+
+   // 1 (space   or touches) and  2 trex height
+  
+    if( (keyDown("space") || touches.length>0)&& trex.y >= height-100) {
+      trex.velocityY = -10;
+      jumpSound.play();
+      touches = [];
+    }
+
+    trex.velocityY = trex.velocityY + 0.8
+
     if (ground.x < 0){
-    ground.x = ground.width/2;
-  }
-  if(checkbox.checked()){
-    trex.setCollider("rectangle",40,0,trex.width + 50,trex.height   + 50);
-  }else{
-    trex.setCollider("rectangle",0,0,trex.width + 50,trex.height   + 50);
-  }
-  spawnClouds();
-  spawnObstacles();
+      ground.x = ground.width/2;
+    }
+
+    if(checkbox.checked()){
+      trex.setCollider("rectangle",40,0,trex.width + 50,trex.height   + 50);
+    }else{
+      trex.setCollider("rectangle",0,0,trex.width + 50,trex.height   + 50);
+    }
+
+    spawnClouds();
+    spawnObstacles();
+    
     if(obstaclesGroup.isTouching(trex)){
       if(checkbox.checked()){
         trex.velocityY = -10;
@@ -114,24 +131,29 @@ function draw() {
       checkPointSound.play();
     }
     
-  gameOver.visible = false;
-  restart.visible = false;
+    gameOver.visible = false;
+    restart.visible = false;
   }
   
- else if(gameState === END){
-   trex.velocityY = 0
-   ground.velocityX = 0
-   obstaclesGroup.setVelocityXEach(0);
-   cloudsGroup.setVelocityXEach(0);
-   trex.changeAnimation("collided",trex_collided)
-   obstaclesGroup.setLifetimeEach(-1);
-   cloudsGroup.setLifetimeEach(-1);
-   restart.visible = true;
-   gameOver.visible = true;
+else if(gameState === END){
+
+  trex.velocityY = 0
+  ground.velocityX = 0
+  
+  obstaclesGroup.setVelocityXEach(0);
+  cloudsGroup.setVelocityXEach(0);
+  
+  trex.changeAnimation("collided",trex_collided)
+ 
+  obstaclesGroup.setLifetimeEach(-1);
+  cloudsGroup.setLifetimeEach(-1);
+  
+  restart.visible = true;
+  gameOver.visible = true;
    
-   if(mousePressedOver(restart)){
+  if(mousePressedOver(restart)){
       reset();
-      }
+  }
 }
   trex.collide(invisibleGround);
   drawSprites();
@@ -140,12 +162,13 @@ function draw() {
 function reset(){
 
   gameState = PLAY 
-  
+  print("changed")
   obstaclesGroup.destroyEach();
   cloudsGroup.destroyEach();
-  if(highScore < score){
-    highScore = score
-    }
+
+  if(localStorage.getItem("highestScore") < score){
+    localStorage.setItem("highestScore",score)
+  }
   score = 0
   
   trex.changeAnimation("running",trex_running);
@@ -159,29 +182,29 @@ function spawnObstacles(){
 
    
     // //generate random obstacles
-    var rand = Math.round(random(1,6));
-    switch(rand) {
-      case 1: obstacle.addImage(obstacle1);
+  var rand = Math.round(random(1,6));
+  switch(rand) {
+    case 1: obstacle.addImage(obstacle1);
               break;
-      case 2: obstacle.addImage(obstacle2);
+    case 2: obstacle.addImage(obstacle2);
               break;
-      case 3: obstacle.addImage(obstacle3);
+    case 3: obstacle.addImage(obstacle3);
               break;
-      case 4: obstacle.addImage(obstacle4);
+    case 4: obstacle.addImage(obstacle4);
               break;
-      case 5: obstacle.addImage(obstacle5);
+    case 5: obstacle.addImage(obstacle5);
               break;
-      case 6: obstacle.addImage(obstacle6);
+    case 6: obstacle.addImage(obstacle6);
               break;
-      default: break;
+    default: break;
     }
    
     //assign scale and lifetime to the obstacle           
-    obstacle.scale = 0.5;
-    obstacle.lifetime = width/2;
+  obstacle.scale = 0.5;
+  obstacle.lifetime = width/2;
    
    //adding obstacles to the group
-   obstaclesGroup.add(obstacle);
+  obstaclesGroup.add(obstacle);
  }
 }
 
@@ -191,7 +214,7 @@ function spawnObstacles(){
 function spawnClouds() {
   //write code here to spawn the clouds
   if (frameCount % 60 === 0) {
-     cloud = createSprite(600,height-100,40,10);
+    cloud = createSprite(600,height-100,40,10);
     cloud.y = Math.round(random(10,height-150));
     cloud.addImage(cloudImage);
     cloud.scale = 0.5;
